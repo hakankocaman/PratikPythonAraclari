@@ -1,5 +1,8 @@
-""" Bu uygulama Hakan KOCAMAN tarafından ip adreslerinin konum bilgilerinin kodlanmıştır. Daha fazla bilgi ve iletişim için 
-www.hakankocaman.com adresini ziyeret edebilir iletisim@hakankocaman.com adresine e-posta atabilirsiniz."""
+""" Bu uygulama Hakan KOCAMAN tarafından ip adreslerinin konum bilgilerinin
+https://ipstack.com/ 'un sağlamış olduğu web serviler üzerinden liste halinde
+hızlı bir şekilde temin edilmesi için kodlanmıştır. Daha fazla bilgi ve iletişim
+için www.hakankocaman.com adresini ziyeret edebilir iletisim@hakankocaman.com
+adresine e-posta atabilirsiniz."""
 
 #!/usr/bin/env python
 #-*-coding:utf-8-*-
