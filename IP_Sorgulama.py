@@ -8,7 +8,7 @@ adresine e-posta atabilirsiniz."""
 #-*-coding:utf-8-*-
 
 #Sorgu işleminde kullanılacak modüller:
-#(eğer modüller yüklü değil ise komut sistemine "pip install requests" komutunu kullanara yükleyebilirsiniz)
+#(eğer modüller yüklü değil ise komut sistemine "pip install requests" komutunu kullanarak yükleyebilirsiniz)
 import requests, json
 
 #Sorgu sonucu listelenecek başlıklar:
