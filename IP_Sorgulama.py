@@ -24,6 +24,3 @@ for x in ip:
   r = requests.get(serviceURL)
   y = json.loads(r.text)
   print(y["ip"],y["country_name"],y["region_name"],y["city"],y["latitude"],y["longitude"])  
-
-#Sorgu ne kadar sürede gerçekleşti:
-print ("Sorgu süresi:",r.elapsed.total_seconds(),"saniye")
