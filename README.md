@@ -3,6 +3,6 @@ Bu repostory, Python ile kodlanmış pratik araçları içerir. Bu araçları ku
 
 ## IP_Sorgulama.py
 Bu uygulama, ip adreslerinin konum bilgilerinin https://ipstack.com/ 'un sağlamış olduğu web serviler üzerinden liste halinde hızlı bir şekilde temin edilmesi için kodlanmıştır. Uygulamanın çalışması için gerekenler;
-- https://ipstack.com adresine üye olarak bir API_KEY temin etmelisiniz,
-- https://ipstack.com adresinden temin ettiğiniz API_KEY'i kodun içerisindeki API_KEY yazan yere kopyalamalısınız,
+- https://ipstack.com adresine üye olarak bir APIKEY temin etmelisiniz,
+- https://ipstack.com adresinden temin ettiğiniz APIKEY'i kodun içerisindeki APIKEY değikene atamalısınız,
 - Eğer requests modülü kurulu değil ise komut satırına "pip install requests" yazarak yüklemelisiniz.
