@@ -6,3 +6,5 @@ Bu uygulama, ip adreslerinin konum bilgilerinin https://ipstack.com/ 'un sağlam
 - https://ipstack.com adresine üye olarak bir APIKEY temin etmelisiniz,
 - https://ipstack.com adresinden temin ettiğiniz APIKEY'i kodun içerisindeki APIKEY değikene atamalısınız,
 - Eğer requests modülü kurulu değil ise komut satırına "pip install requests" yazarak yüklemelisiniz.
+
+[<img src="https://img.youtube.com/vi/l2nR6o_rxfw/maxresdefault.jpg" width="100%">](https://youtu.be/l2nR6o_rxfw>)
