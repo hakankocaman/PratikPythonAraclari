@@ -8,7 +8,8 @@ This application is coded to provide a quick list of IP addresses with the web s
 - You should assign the APIKEY you received from https://ipstack.com to the APIKEY variable in the code,
 - If the requests module is not installed, you should install it by typing "pip install requests" on the command line.
 
-For detailed content, see: https://www.hakankocaman.com/python-ile-pratik-araclar-ip-sorgulma 
+For detailed content, see: https://www.hakankocaman.com/python-ile-pratik-araclar-ip-sorgulma
+
 For the Medium article, see: https://medium.com/@hakankocaman/practical-tools-with-python-ip-query-541fa6df8cd9
 
 Click on the picture below to access the Youtube video:
