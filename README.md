@@ -1,10 +1,12 @@
-# Pratik Python Araçları
-Bu repostory, Python ile kodlanmış pratik araçları içerir. Bu araçları kullanabilmek için bilgisayarınızda Python3+ kurulu olması gerekir. Ayrıca uygulamalarda belirtilen modüller eğer kurulu değil ise uygulamanın açıklamasında ifade edildiği gibi ilgili modülü komut satırına "pip install moduladı" şeklinde girerek kurabilirsiniz.
+# Practical Python Tools
+This repostory contains practical tools encoded in Python. To use these tools, you need to have Python3 + installed on your computer. In addition, if the modules specified in the applications are not installed, you can install the related module by entering "pip install module" in the command line as stated in the description of the application.
 
 ## IP_Sorgulama.py
-Bu uygulama, ip adreslerinin konum bilgilerinin https://ipstack.com/ 'un sağlamış olduğu web serviler üzerinden liste halinde hızlı bir şekilde temin edilmesi için kodlanmıştır. Uygulamanın çalışması için gerekenler;
-- https://ipstack.com adresine üye olarak bir APIKEY temin etmelisiniz,
-- https://ipstack.com adresinden temin ettiğiniz APIKEY'i kodun içerisindeki APIKEY değikene atamalısınız,
-- Eğer requests modülü kurulu değil ise komut satırına "pip install requests" yazarak yüklemelisiniz.
+This application is coded to provide a quick list of IP addresses with the web services provided by https://ipstack.com/ . Requirements for the application to work;
 
+- You must obtain an APIKEY by signing up at https://ipstack.com,
+- You should assign the APIKEY you received from https://ipstack.com to the APIKEY variable in the code,
+- If the requests module is not installed, you should install it by typing "pip install requests" on the command line.
+
+Click on the picture below to access the Youtube video:
 [<img src="https://www.hakankocaman.com/wp-content/uploads/PythonBanner.png" width="100%">](https://youtu.be/l2nR6o_rxfw)
