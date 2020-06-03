@@ -13,4 +13,4 @@ For detailed content, see: https://www.hakankocaman.com/python-ile-pratik-aracla
 For the Medium article, see: https://medium.com/@hakankocaman/practical-tools-with-python-ip-query-541fa6df8cd9
 
 Click on the picture below to access the Youtube video:
-[<img src="http://www.hakankocaman.com/wp-content/uploads/PythonBanner.png" width="100%">](https://youtu.be/l2nR6o_rxfw)
+[<img src="https://www.hakankocaman.com/wp-content/uploads/IP_Query.jpg" width="100%">](https://youtu.be/l2nR6o_rxfw)
