@@ -24,6 +24,7 @@ try:
 
 except FileNotFoundError:
   print("coordinate.txt not found!")
+  exit()
 
 
 #s_srs = input("Please enter the EPSG code of the source coordinate system: ")
