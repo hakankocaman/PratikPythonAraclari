@@ -17,5 +17,11 @@ Click on the picture below to access the Youtube video:
 
 ## Coordinate Transformation
 
+Using the Coordinate Converter tool, it is possible to convert the coordinate pairs in the “coordinate.txt” file in the same directory to their equivalent in another coordinate reference system using the services provided by EPSG.io. To do this, you need to do this by copying the coordinate pairs in the existing coordinate reference system with a space between them, saving the file and closing it. Then, after entering the EPSG codes of the existing and desired coordinate reference systems in the codes written in Python, in the relevant fields, run the code in your compiler. Thus, each of the coordinate pairs written in the coordinate.txt file will be converted into the coordinate reference system by the services provided by EPSG.io and printed into the “coordinate.txt” file and the process will be completed in this way.
+
+For detailed content, see: https://www.hakankocaman.com/python-ile-pratik-araclar-koordinat-donusumu
+
+For the Medium article, see: https://medium.com/@hakankocaman/practical-tools-with-python-coordinate-transformation-d8783efabda3
+
 Click on the picture below to access the Youtube video:
 [<img src="https://www.hakankocaman.com/wp-content/uploads/Coordinate_Transformation.png" width="100%">](https://youtu.be/PRK20-Wzeeo)
