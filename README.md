@@ -32,7 +32,7 @@ You can access Python tool named MGRS Convertor and details, which allows you to
 
 For detailed content, see: https://www.hakankocaman.com/python-ile-pratik-araclar-mgrs-donusturucu
 
-For the Medium article, see: 
+For the Medium article, see: https://medium.com/@hakankocaman/practical-tools-with-python-mgrs-converter-fceac251780a
 
 Click on the picture below to access the Youtube video:
 [<img src="https://i2.wp.com/www.hakankocaman.com/wp-content/uploads/MGRS.png" width="100%">](https://youtu.be/DNg9HYekD0k)
