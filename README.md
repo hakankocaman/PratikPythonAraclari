@@ -46,4 +46,4 @@ For detailed content, see: https://www.hakankocaman.com/python-ile-pratik-aracla
 For the Medium article, see: https://medium.com/@hakankocaman/practical-tools-with-python-google-elevation-api-4e0231a94480
 
 Click on the picture below to access the Youtube video:
-[<img src="https://i2.wp.com/www.hakankocaman.com/wp-content/uploads/Google_Elevation_API.jpg?resize=800%2C400&ssl=1" width="100%">](https://youtu.be/DNg9HYekD0k)
+[<img src="https://i2.wp.com/www.hakankocaman.com/wp-content/uploads/Google_Elevation_API.jpg?resize=800%2C400&ssl=1" width="100%">](https://youtu.be/S0OcNtyO3Fk)
