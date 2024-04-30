@@ -1,5 +1,9 @@
 #pip install python-telegram-bot
 #pip install requests
+#pip install colorama
+
+import colorama
+from colorama import Fore, Style
 
 import requests, time
 print(time.strftime("%d-%m-%Y %H:%M:%S"))
@@ -39,20 +43,20 @@ while True:
             response=requests.get(url)
             response.raise_for_status()  # Throws an exception in case of error
         except requests.exceptions.HTTPError as errh:
-            print ("Http Hatası:",errh)
+            print ("Http Error:",errh)
         except requests.exceptions.ConnectionError as errc:
-            print ("Bağlantı Hatası:",errc)
+            print ("Connection Error:",errc)
         except requests.exceptions.Timeout as errt:
-            print ("Timeout Hatası:",errt)
+            print ("Timeout Error:",errt)
         except requests.exceptions.RequestException as err:
-            print ("Bir şeyler ters gitti:",err)
+            print ("Something went wrong:",err)
         
         if response.status_code==200:
             print(f'{url} site is working.')
             mesaj=f'{url} site is working.'
             
         else:
-            print(f'{url} site is not working.')
+            print(f'{Fore.RED}{url} site is not working.{Style.RESET_ALL}')
             mesaj=f'{url} site is not working.'
 
         try:
@@ -61,7 +65,7 @@ while True:
         except requests.exceptions.HTTPError as errh:
             print ("Http Error:",errh)
         except requests.exceptions.ConnectionError as errc:
-            print ("Bağlantı Error:",errc)
+            print ("Connection Error:",errc)
         except requests.exceptions.Timeout as errt:
             print ("Timeout Error:",errt)
         except requests.exceptions.RequestException as err:
