@@ -47,3 +47,8 @@ For the Medium article, see: https://medium.com/@hakankocaman/practical-tools-wi
 
 Click on the picture below to access the Youtube video:
 [<img src="https://i2.wp.com/www.hakankocaman.com/wp-content/uploads/Google_Elevation_API.jpg?resize=800%2C400&ssl=1" width="100%">](https://youtu.be/S0OcNtyO3Fk)
+
+## web Site Alert
+
+This application is coded by Hakan KOCAMAN for fast access control of websites. For more information and contact, you can visit www.hakankocaman.com and send an e-mail to İletişim@hakankocaman.com.
+
