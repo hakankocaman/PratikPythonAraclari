@@ -1,3 +1,8 @@
+"""This application is coded by Hakan KOCAMAN for fast access control of websites.
+For more information and contact, you can visit www.hakankocaman.com and 
+send an e-mail to İletişim@hakankocaman.com."""
+
+
 #pip install python-telegram-bot
 #pip install requests
 #pip install colorama
