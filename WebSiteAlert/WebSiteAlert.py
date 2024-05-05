@@ -37,8 +37,7 @@ i=0
 file.seek(0) 
 print("The query will begin shortly...")
 while True:
-    if i>0:
-        time.sleep(56) # 56 secons wait
+    
     i +=1
     print(str(i)+"st query "+time.strftime("%d-%m-%Y %H:%M:%S"))
     for list in sitelist:
@@ -75,3 +74,8 @@ while True:
             print ("Timeout Error:",errt)
         except requests.exceptions.RequestException as err:
             print ("Something went wrong:",err)
+
+    for remaining in range(59, 0, -1):  # Countdown loop
+            print(f'\rRemaining time: {remaining} seconds', end='')
+            time.sleep(1)
+    print('\r' + ' ' * 40 + '\r')  # Clear the countdown line
