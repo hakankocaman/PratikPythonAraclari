@@ -51,3 +51,15 @@ Click on the picture below to access the Youtube video:
 ## WEBb Site Alert
 
 This application is coded by Hakan KOCAMAN for fast access control of websites. For more information and contact, you can visit www.hakankocaman.com and send an e-mail to İletişim@hakankocaman.com.
+
+## Star History
+
+## Star History
+
+<a href="https://star-history.com/#hakankocaman/PratikPythonAraclari&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=hakankocaman/PratikPythonAraclari&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=hakankocaman/PratikPythonAraclari&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=hakankocaman/PratikPythonAraclari&type=Date" />
+ </picture>
+</a>
