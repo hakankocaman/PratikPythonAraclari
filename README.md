@@ -1,6 +1,36 @@
 # Practical Python Tools
 This repostory contains practical tools encoded in Python. To use these tools, you need to have Python3 + installed on your computer. In addition, if the modules specified in the applications are not installed, you can install the related module by entering "pip install module" in the command line as stated in the description of the application.
 
+## HavaTahmin.py (Weather Forecast Application)
+This application provides real-time weather information using the OpenWeatherMap API. The application displays temperature, humidity, wind speed, atmospheric pressure, and sunrise/sunset times for any city in the world.
+
+**Features:**
+- 🌡️ Real-time temperature and "feels like" temperature
+- ☁️ Weather condition descriptions in Turkish
+- 💧 Humidity percentage
+- 🌬️ Wind speed
+- 📊 Atmospheric pressure
+- 🌅 Sunrise and sunset times
+- ❌ Comprehensive error handling
+
+**Requirements:**
+- Python 3.6+
+- requests module (`pip install requests`)
+- OpenWeatherMap API key (free at https://openweathermap.org/api)
+
+**Usage:**
+```bash
+python3 HavaTahmin.py
+```
+
+**Future Enhancements (Daily Updates):**
+- Day 2: 5-day weather forecast
+- Day 3: Save favorite cities (JSON file)
+- Day 4: Weather icons and emoji support
+- Day 5: Compare multiple cities
+- Day 6: Temperature graphs (matplotlib)
+- Day 7: Weather alerts (extreme temperatures)
+
 ## IP_Sorgulama.py
 This application is coded to provide a quick list of IP addresses with the web services provided by https://ipstack.com/ . Requirements for the application to work;
 
