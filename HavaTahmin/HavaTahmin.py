@@ -55,9 +55,67 @@ class HavaDurumuApp:
         if sicaklik >= 30:
             return "🥵"
         return "🙂"
+
+    def sehir_girdisini_duzenle(self, sehir):
+        """Kullanıcıdan gelen şehir girdisini temizler."""
+        return sehir.strip().strip('"').strip("'").strip()
+
+    def sehir_listesini_ayikla(self, girdi):
+        """Virgülle ayrılmış şehir listesini temizleyip döndürür."""
+        return [
+            sehir for sehir in
+            (self.sehir_girdisini_duzenle(parca) for parca in girdi.split(","))
+            if sehir
+        ]
+
+    def sehir_karsilastir(self, sehirler):
+        """Birden fazla şehrin mevcut hava durumunu karşılaştırır."""
+        if len(sehirler) < 2:
+            print("⚠️  Karşılaştırma için en az iki şehir girin!\n")
+            return
+
+        veriler = []
+        for sehir in sehirler:
+            veri = self.hava_durumu_getir(sehir)
+            if veri:
+                veriler.append(veri)
+
+        if len(veriler) < 2:
+            print("⚠️  Karşılaştırma için yeterli şehir verisi alınamadı!\n")
+            return
+
+        print("\n" + "=" * 96)
+        print("📊 ŞEHİR KARŞILAŞTIRMA")
+        print("=" * 96)
+        print(
+            f"{'Şehir':<18} {'Sıcaklık':<12} {'Hissedilen':<14} "
+            f"{'Durum':<28} {'Nem':<8} {'Rüzgar':<10}"
+        )
+        print("-" * 96)
+
+        for veri in veriler:
+            sehir_adi = veri['name'][:18]
+            sicaklik = f"{veri['main']['temp']:.1f}°C"
+            hissedilen = f"{veri['main']['feels_like']:.1f}°C"
+            durum = veri['weather'][0]['description'].capitalize()
+            hava_ikonu = self.hava_emoji(durum)
+            durum_metin = f"{hava_ikonu} {durum}"
+            if len(durum_metin) > 27:
+                durum_metin = durum_metin[:24] + "..."
+            nem = f"{veri['main']['humidity']}%"
+            ruzgar = f"{veri['wind']['speed']:.1f} m/s"
+
+            print(
+                f"{sehir_adi:<18} {sicaklik:<12} {hissedilen:<14} "
+                f"{durum_metin:<28} {nem:<8} {ruzgar:<10}"
+            )
+
+        print("=" * 96 + "\n")
         
     def hava_durumu_getir(self, sehir):
         """Belirtilen şehir için hava durumu bilgisi getirir."""
+        sehir = self.sehir_girdisini_duzenle(sehir)
+
         try:
             # API parametreleri
             params = {
@@ -130,6 +188,8 @@ class HavaDurumuApp:
 
     def tahmin_getir(self, sehir):
         """Belirtilen şehir için 5 günlük hava tahmini getirir."""
+        sehir = self.sehir_girdisini_duzenle(sehir)
+
         try:
             params = {
                 "q": sehir,
@@ -232,7 +292,7 @@ class HavaDurumuApp:
 
     def favori_ekle(self, sehir):
         """Yeni bir şehri favorilere ekler."""
-        sehir = sehir.strip()
+        sehir = self.sehir_girdisini_duzenle(sehir)
         if not sehir:
             print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
             return
@@ -252,9 +312,19 @@ class HavaDurumuApp:
         if not favoriler:
             return None
 
-        secim = input("⭐ Seçmek istediğiniz favori şehir numarası: ").strip()
+        secim = self.sehir_girdisini_duzenle(
+            input("⭐ Seçmek istediğiniz favori şehir numarası veya adı: ")
+        )
+
+        if not secim:
+            print("⚠️  Lütfen geçerli bir seçim yapın!\n")
+            return None
+
         if not secim.isdigit():
-            print("⚠️  Lütfen geçerli bir numara girin!\n")
+            for sehir in favoriler:
+                if sehir.lower() == secim.lower():
+                    return sehir
+            print("⚠️  Bu isimde favori şehir bulunamadı!\n")
             return None
 
         index = int(secim) - 1
@@ -283,37 +353,6 @@ class HavaDurumuApp:
             return
 
         print("⚠️  Geçersiz seçim yaptınız!\n")
-    
-
-    def sehir_karsilastir(self, sehirler):
-        """Birden fazla şehrin hava durumunu karşılaştırır."""
-        print("\n" + "="*80)
-        print("📊 ŞEHİR KARŞILAŞTIRMA")
-        print("="*80)
-        
-        veriler = []
-        for sehir in sehirler:
-            veri = self.hava_durumu_getir(sehir)
-            if veri:
-                veriler.append(veri)
-        
-        if not veriler:
-            print("❌ Karşılaştırma için veri alınamadı!")
-            return
-        
-        # Başlık
-        print(f"\n{'Şehir':<20} {'Sıcaklık':<15} {'Durum':<20} {'Nem':<10}")
-        print("-" * 80)
-        
-        for veri in veriler:
-            sehir = veri['name']
-            sicaklik = f"{veri['main']['temp']:.1f}°C"
-            durum = veri['weather'][0]['description'].capitalize()
-            nem = f"{veri['main']['humidity']}%"
-            
-            print(f"{sehir:<20} {sicaklik:<15} {durum:<20} {nem:<10}")
-        
-        print("="*80 + "\n")
     def calistir(self):
         """Uygulamayı çalıştırır."""
         print("\n" + "🌤️  " * 10)
@@ -354,16 +393,20 @@ class HavaDurumuApp:
             print("  4. 📋 Favori şehirleri listele")
             print("  5. 🌍 Favori şehirden hava durumu göster")
             print("  6. 🗑️  Favori şehir sil")
+            print("  7. 📊 Birden fazla şehri karşılaştır")
             print("  q. Çıkış")
+            print("  İpucu: Doğrudan şehir adı da yazabilirsiniz. Örnek: Sakarya")
 
-            secim = input("🔹 Seçim yapın veya direkt şehir adı girin: ").strip()
+            secim = self.sehir_girdisini_duzenle(
+                input("🔹 Seçim yapın veya direkt şehir adı girin: ")
+            )
 
             if secim.lower() in ['q', 'quit', 'exit', 'çık']:
                 print("\n👋 Görüşmek üzere!\n")
                 break
 
             if secim == '2':
-                sehir = input("🏙️  Tahmin alınacak şehir: ").strip()
+                sehir = self.sehir_girdisini_duzenle(input("🏙️  Tahmin alınacak şehir: "))
                 if not sehir:
                     print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
                     continue
@@ -373,7 +416,7 @@ class HavaDurumuApp:
                 continue
 
             if secim == '3':
-                sehir = input("⭐ Favorilere eklenecek şehir: ").strip()
+                sehir = self.sehir_girdisini_duzenle(input("⭐ Favorilere eklenecek şehir: "))
                 self.favori_ekle(sehir)
                 continue
 
@@ -392,10 +435,18 @@ class HavaDurumuApp:
                 self.favori_sil()
                 continue
 
+            if secim == '7':
+                girdi = input(
+                    "📊 Karşılaştırılacak şehirleri virgülle girin (örn: Sakarya, Ankara, İzmir): "
+                )
+                sehirler = self.sehir_listesini_ayikla(girdi)
+                self.sehir_karsilastir(sehirler)
+                continue
+
             if secim == '1':
-                sehir = input("🏙️  Şehir adı girin: ").strip()
+                sehir = self.sehir_girdisini_duzenle(input("🏙️  Şehir adı girin: "))
             else:
-                sehir = secim
+                sehir = self.sehir_girdisini_duzenle(secim)
 
             if not sehir:
                 print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
