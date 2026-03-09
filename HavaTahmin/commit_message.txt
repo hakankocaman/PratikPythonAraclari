@@ -1,1 +1,1 @@
-🌤️ Gün 2: 5 günlük hava tahmini özelliği eklendi
+📊 Gün 5: Şehir karşılaştırma özelliği eklendi

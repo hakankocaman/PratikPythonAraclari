@@ -284,6 +284,36 @@ class HavaDurumuApp:
 
         print("⚠️  Geçersiz seçim yaptınız!\n")
     
+
+    def sehir_karsilastir(self, sehirler):
+        """Birden fazla şehrin hava durumunu karşılaştırır."""
+        print("\n" + "="*80)
+        print("📊 ŞEHİR KARŞILAŞTIRMA")
+        print("="*80)
+        
+        veriler = []
+        for sehir in sehirler:
+            veri = self.hava_durumu_getir(sehir)
+            if veri:
+                veriler.append(veri)
+        
+        if not veriler:
+            print("❌ Karşılaştırma için veri alınamadı!")
+            return
+        
+        # Başlık
+        print(f"\n{'Şehir':<20} {'Sıcaklık':<15} {'Durum':<20} {'Nem':<10}")
+        print("-" * 80)
+        
+        for veri in veriler:
+            sehir = veri['name']
+            sicaklik = f"{veri['main']['temp']:.1f}°C"
+            durum = veri['weather'][0]['description'].capitalize()
+            nem = f"{veri['main']['humidity']}%"
+            
+            print(f"{sehir:<20} {sicaklik:<15} {durum:<20} {nem:<10}")
+        
+        print("="*80 + "\n")
     def calistir(self):
         """Uygulamayı çalıştırır."""
         print("\n" + "🌤️  " * 10)
