@@ -4,6 +4,8 @@ This repostory contains practical tools encoded in Python. To use these tools, y
 ## HavaTahmin.py (Weather Forecast Application)
 This application provides real-time weather information using the OpenWeatherMap API. The application displays temperature, humidity, wind speed, atmospheric pressure, and sunrise/sunset times for any city in the world.
 
+Project files are located under: `HavaTahmin/`
+
 **Features:**
 - 🌡️ Real-time temperature and "feels like" temperature
 - ☁️ Weather condition descriptions in Turkish
@@ -20,7 +22,7 @@ This application provides real-time weather information using the OpenWeatherMap
 
 **Usage:**
 ```bash
-python3 HavaTahmin.py
+python3 HavaTahmin/HavaTahmin.py
 ```
 
 **Future Enhancements (Daily Updates):**
@@ -30,6 +32,26 @@ python3 HavaTahmin.py
 - Day 5: Compare multiple cities
 - Day 6: Temperature graphs (matplotlib)
 - Day 7: Weather alerts (extreme temperatures)
+
+**🤖 Automated Daily Development:**
+This project uses GitHub Actions to automatically add new features every day at 12:00 PM (Turkey time). The automation system:
+- ✅ Adds one new feature per day following the roadmap above
+- ✅ Automatically commits and pushes changes to GitHub
+- ✅ Maintains consistent GitHub contribution activity
+- ✅ Runs completely in the cloud (no local machine required)
+
+**Development Progress:**
+- Current Day: 2/7
+- Next Feature: 5-day weather forecast
+- Automation Status: Active ✅
+
+You can manually trigger the workflow from the [Actions tab](https://github.com/hakankocaman/PratikPythonAraclari/actions) on GitHub.
+
+**Folder Structure (HavaTahmin):**
+- `HavaTahmin/HavaTahmin.py` → Main application
+- `HavaTahmin/requirements.txt` → Dependencies for weather app
+- `HavaTahmin/daily_update.py` → Daily auto-development script
+- `HavaTahmin/development_plan.json` → 7-day feature plan state
 
 ## IP_Sorgulama.py
 This application is coded to provide a quick list of IP addresses with the web services provided by https://ipstack.com/ . Requirements for the application to work;

@@ -1,0 +1,54 @@
+{
+  "project_name": "Hava Durumu Tahmin Uygulaması",
+  "current_day": 3,
+  "start_date": "2026-03-07",
+  "completed_days": [
+    1,
+    2
+  ],
+  "total_days": 7,
+  "daily_features": {
+    "1": {
+      "title": "Temel Hava Durumu Uygulaması",
+      "description": "OpenWeatherMap API entegrasyonu, mevcut hava durumu bilgisi",
+      "status": "completed",
+      "completion_date": "2026-03-07"
+    },
+    "2": {
+      "title": "5 Günlük Hava Tahmini",
+      "description": "Forecast API ile gelecek 5 gün için hava tahmini",
+      "status": "pending"
+    },
+    "3": {
+      "title": "Favori Şehirler Sistemi",
+      "description": "JSON dosyası ile favori şehirleri kaydetme ve yönetme",
+      "status": "pending"
+    },
+    "4": {
+      "title": "Görsel İyileştirmeler",
+      "description": "Hava durumu emojileri ve renkli konsol çıktısı",
+      "status": "pending"
+    },
+    "5": {
+      "title": "Şehir Karşılaştırma",
+      "description": "Birden fazla şehrin hava durumunu karşılaştırma",
+      "status": "pending"
+    },
+    "6": {
+      "title": "Grafik Desteği",
+      "description": "Matplotlib ile sıcaklık grafikleri ve görselleştirme",
+      "status": "pending"
+    },
+    "7": {
+      "title": "Hava Durumu Uyarıları",
+      "description": "Aşırı hava koşulları için otomatik uyarı sistemi",
+      "status": "pending"
+    }
+  },
+  "automation": {
+    "enabled": true,
+    "schedule": "daily at 09:00 UTC (12:00 Turkey)",
+    "method": "GitHub Actions"
+  },
+  "last_update": "2026-03-07 02:47:22"
+}

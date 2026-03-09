@@ -1,0 +1,50 @@
+name: Günlük Hava Durumu Uygulaması Geliştirme
+
+on:
+  schedule:
+    # Her gün saat 09:00'da (UTC) çalışır - Türkiye saati 12:00
+    - cron: '0 9 * * *'
+  workflow_dispatch:  # Manuel tetikleme için
+
+permissions:
+  contents: write
+
+jobs:
+  daily-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Python Kurulumu
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Bağımlılıkları Yükle
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r HavaTahmin/requirements.txt
+      
+      - name: Günlük Geliştirme Scriptini Çalıştır
+        run: python3 HavaTahmin/daily_update.py
+      
+      - name: Git Yapılandırması
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+      
+      - name: Değişiklikleri Commit ve Push Et
+        run: |
+          git add HavaTahmin .github/workflows/daily-update.yml README.md
+          if git diff --staged --quiet; then
+            echo "Değişiklik yok, commit atlanıyor"
+          else
+            COMMIT_MSG=$(cat HavaTahmin/commit_message.txt 2>/dev/null || echo "🌤️ Günlük güncelleme: $(date +'%Y-%m-%d')")
+            git commit -m "$COMMIT_MSG"
+            git push
+            echo "✅ Değişiklikler başarıyla push edildi!"
+          fi
