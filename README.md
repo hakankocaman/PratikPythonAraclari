@@ -8,6 +8,7 @@ Project files are located under: `HavaTahmin/`
 
 **Features:**
 - 🌡️ Real-time temperature and "feels like" temperature
+- 📅 5-day weather forecast
 - ☁️ Weather condition descriptions in Turkish
 - 💧 Humidity percentage
 - 🌬️ Wind speed
@@ -26,7 +27,6 @@ python3 HavaTahmin/HavaTahmin.py
 ```
 
 **Future Enhancements (Daily Updates):**
-- Day 2: 5-day weather forecast
 - Day 3: Save favorite cities (JSON file)
 - Day 4: Weather icons and emoji support
 - Day 5: Compare multiple cities
@@ -41,8 +41,8 @@ This project uses GitHub Actions to automatically add new features every day at 
 - ✅ Runs completely in the cloud (no local machine required)
 
 **Development Progress:**
-- Current Day: 2/7
-- Next Feature: 5-day weather forecast
+- Current Day: 3/7
+- Next Feature: Favorite cities system
 - Automation Status: Active ✅
 
 You can manually trigger the workflow from the [Actions tab](https://github.com/hakankocaman/PratikPythonAraclari/actions) on GitHub.

@@ -14,6 +14,16 @@ class HavaDurumuApp:
         # OpenWeatherMap API anahtarı (Ücretsiz: https://openweathermap.org/api)
         self.api_key = "a693375440701d0d3bff0a4d640c3eb2"
         self.base_url = "http://api.openweathermap.org/data/2.5/weather"
+        self.forecast_url = "http://api.openweathermap.org/data/2.5/forecast"
+        self.gunler_tr = {
+            "Monday": "Pazartesi",
+            "Tuesday": "Salı",
+            "Wednesday": "Çarşamba",
+            "Thursday": "Perşembe",
+            "Friday": "Cuma",
+            "Saturday": "Cumartesi",
+            "Sunday": "Pazar",
+        }
         
     def hava_durumu_getir(self, sehir):
         """Belirtilen şehir için hava durumu bilgisi getirir."""
@@ -84,6 +94,74 @@ class HavaDurumuApp:
         print(f"🌅 Gün Doğumu: {gun_dogus}")
         print(f"🌇 Gün Batımı: {gun_batis}")
         print("="*50 + "\n")
+
+    def tahmin_getir(self, sehir):
+        """Belirtilen şehir için 5 günlük hava tahmini getirir."""
+        try:
+            params = {
+                "q": sehir,
+                "appid": self.api_key,
+                "units": "metric",
+                "lang": "tr"
+            }
+
+            response = requests.get(self.forecast_url, params=params, timeout=10)
+
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 401:
+                print("❌ HATA: Geçersiz API anahtarı!")
+                return None
+            elif response.status_code == 404:
+                print(f"❌ HATA: '{sehir}' şehri için tahmin verisi bulunamadı!")
+                return None
+            else:
+                print(f"❌ HATA: Tahmin API hatası (Kod: {response.status_code})")
+                return None
+
+        except requests.exceptions.ConnectionError:
+            print("❌ HATA: İnternet bağlantısı yok!")
+            return None
+        except requests.exceptions.Timeout:
+            print("❌ HATA: Tahmin isteği zaman aşımına uğradı!")
+            return None
+        except Exception as e:
+            print(f"❌ Beklenmeyen tahmin hatası: {e}")
+            return None
+
+    def tahmin_goster(self, veri):
+        """5 günlük hava tahminini ekranda gösterir."""
+        if not veri:
+            return
+
+        print("\n" + "="*70)
+        print(f"📅 5 GÜNLÜK HAVA TAHMİNİ: {veri['city']['name']}, {veri['city']['country']}")
+        print("="*70)
+
+        gunluk_veri = {}
+        for kayit in veri["list"]:
+            tarih = datetime.fromtimestamp(kayit["dt"]).strftime("%Y-%m-%d")
+            gunluk_veri.setdefault(tarih, []).append(kayit)
+
+        for tarih, kayitlar in list(gunluk_veri.items())[:5]:
+            sicakliklar = [kayit["main"]["temp"] for kayit in kayitlar]
+            secilen_kayit = min(
+                kayitlar,
+                key=lambda item: abs(datetime.fromtimestamp(item["dt"]).hour - 12)
+            )
+
+            tarih_obj = datetime.strptime(tarih, "%Y-%m-%d")
+            gun_adi_en = tarih_obj.strftime("%A")
+            gun_adi_tr = self.gunler_tr.get(gun_adi_en, gun_adi_en)
+            aciklama = secilen_kayit["weather"][0]["description"].capitalize()
+            nem = secilen_kayit["main"]["humidity"]
+
+            print(f"\n🗓️  {gun_adi_tr} - {tarih_obj.strftime('%d.%m.%Y')}")
+            print(f"   🌡️  Min: {min(sicakliklar):.1f}°C | Max: {max(sicakliklar):.1f}°C")
+            print(f"   ☁️  Durum: {aciklama}")
+            print(f"   💧 Nem: {nem}%")
+
+        print("="*70 + "\n")
     
     def calistir(self):
         """Uygulamayı çalıştırır."""
@@ -118,13 +196,32 @@ class HavaDurumuApp:
             return
         
         while True:
-            # Kullanıcıdan şehir adı al
-            sehir = input("🏙️  Şehir adı girin (çıkmak için 'q'): ").strip()
-            
-            if sehir.lower() in ['q', 'quit', 'exit', 'çık']:
+            print("Seçenekler:")
+            print("  1. Mevcut hava durumu")
+            print("  2. 5 günlük hava tahmini")
+            print("  q. Çıkış")
+
+            secim = input("🔹 Seçim yapın veya direkt şehir adı girin: ").strip()
+
+            if secim.lower() in ['q', 'quit', 'exit', 'çık']:
                 print("\n👋 Görüşmek üzere!\n")
                 break
-            
+
+            if secim == '2':
+                sehir = input("🏙️  Tahmin alınacak şehir: ").strip()
+                if not sehir:
+                    print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
+                    continue
+
+                veri = self.tahmin_getir(sehir)
+                self.tahmin_goster(veri)
+                continue
+
+            if secim == '1':
+                sehir = input("🏙️  Şehir adı girin: ").strip()
+            else:
+                sehir = secim
+
             if not sehir:
                 print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
                 continue
