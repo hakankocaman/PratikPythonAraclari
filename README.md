@@ -9,6 +9,7 @@ Project files are located under: `HavaTahmin/`
 **Features:**
 - 🌡️ Real-time temperature and "feels like" temperature
 - 📅 5-day weather forecast
+- ⭐ Favorite cities system
 - ☁️ Weather condition descriptions in Turkish
 - 💧 Humidity percentage
 - 🌬️ Wind speed
@@ -27,7 +28,6 @@ python3 HavaTahmin/HavaTahmin.py
 ```
 
 **Future Enhancements (Daily Updates):**
-- Day 3: Save favorite cities (JSON file)
 - Day 4: Weather icons and emoji support
 - Day 5: Compare multiple cities
 - Day 6: Temperature graphs (matplotlib)
@@ -41,8 +41,8 @@ This project uses GitHub Actions to automatically add new features every day at 
 - ✅ Runs completely in the cloud (no local machine required)
 
 **Development Progress:**
-- Current Day: 3/7
-- Next Feature: Favorite cities system
+- Current Day: 4/7
+- Next Feature: Weather icons and emoji support
 - Automation Status: Active ✅
 
 You can manually trigger the workflow from the [Actions tab](https://github.com/hakankocaman/PratikPythonAraclari/actions) on GitHub.
@@ -52,6 +52,7 @@ You can manually trigger the workflow from the [Actions tab](https://github.com/
 - `HavaTahmin/requirements.txt` → Dependencies for weather app
 - `HavaTahmin/daily_update.py` → Daily auto-development script
 - `HavaTahmin/development_plan.json` → 7-day feature plan state
+- `HavaTahmin/favoriler.json` → Local favorite cities file (auto-created, git ignored)
 
 ## IP_Sorgulama.py
 This application is coded to provide a quick list of IP addresses with the web services provided by https://ipstack.com/ . Requirements for the application to work;

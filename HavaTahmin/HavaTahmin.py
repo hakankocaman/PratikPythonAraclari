@@ -5,9 +5,11 @@ Hava Durumu Tahmin Uygulaması
 OpenWeatherMap API kullanarak gerçek zamanlı hava durumu bilgisi sağlar.
 """
 
+import json
 import requests
 import sys
 from datetime import datetime
+from pathlib import Path
 
 class HavaDurumuApp:
     def __init__(self):
@@ -15,6 +17,7 @@ class HavaDurumuApp:
         self.api_key = "a693375440701d0d3bff0a4d640c3eb2"
         self.base_url = "http://api.openweathermap.org/data/2.5/weather"
         self.forecast_url = "http://api.openweathermap.org/data/2.5/forecast"
+        self.favoriler_dosyasi = Path(__file__).with_name("favoriler.json")
         self.gunler_tr = {
             "Monday": "Pazartesi",
             "Tuesday": "Salı",
@@ -162,6 +165,93 @@ class HavaDurumuApp:
             print(f"   💧 Nem: {nem}%")
 
         print("="*70 + "\n")
+
+    def favorileri_yukle(self):
+        """Favori şehir listesini JSON dosyasından yükler."""
+        if not self.favoriler_dosyasi.exists():
+            return []
+
+        try:
+            with open(self.favoriler_dosyasi, "r", encoding="utf-8") as dosya:
+                veriler = json.load(dosya)
+                return veriler if isinstance(veriler, list) else []
+        except (json.JSONDecodeError, OSError):
+            print("⚠️  Favori şehir dosyası okunamadı. Boş liste ile devam ediliyor.")
+            return []
+
+    def favorileri_kaydet(self, favoriler):
+        """Favori şehir listesini JSON dosyasına kaydeder."""
+        with open(self.favoriler_dosyasi, "w", encoding="utf-8") as dosya:
+            json.dump(favoriler, dosya, ensure_ascii=False, indent=2)
+
+    def favorileri_listele(self):
+        """Favori şehirleri ekrana yazdırır."""
+        favoriler = self.favorileri_yukle()
+
+        if not favoriler:
+            print("\n⭐ Henüz kayıtlı favori şehir bulunmuyor.\n")
+            return []
+
+        print("\n⭐ FAVORİ ŞEHİRLER")
+        print("-" * 30)
+        for index, sehir in enumerate(favoriler, start=1):
+            print(f"{index}. {sehir}")
+        print()
+        return favoriler
+
+    def favori_ekle(self, sehir):
+        """Yeni bir şehri favorilere ekler."""
+        sehir = sehir.strip()
+        if not sehir:
+            print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
+            return
+
+        favoriler = self.favorileri_yukle()
+        if any(kayit.lower() == sehir.lower() for kayit in favoriler):
+            print(f"⚠️  '{sehir}' zaten favoriler arasında kayıtlı.\n")
+            return
+
+        favoriler.append(sehir)
+        self.favorileri_kaydet(favoriler)
+        print(f"✅ '{sehir}' favorilere eklendi.\n")
+
+    def favori_sec(self):
+        """Favoriler içinden şehir seçtirir."""
+        favoriler = self.favorileri_listele()
+        if not favoriler:
+            return None
+
+        secim = input("⭐ Seçmek istediğiniz favori şehir numarası: ").strip()
+        if not secim.isdigit():
+            print("⚠️  Lütfen geçerli bir numara girin!\n")
+            return None
+
+        index = int(secim) - 1
+        if 0 <= index < len(favoriler):
+            return favoriler[index]
+
+        print("⚠️  Geçersiz seçim yaptınız!\n")
+        return None
+
+    def favori_sil(self):
+        """Favori şehir listesinden seçimle silme işlemi yapar."""
+        favoriler = self.favorileri_listele()
+        if not favoriler:
+            return
+
+        secim = input("🗑️  Silmek istediğiniz favori şehir numarası: ").strip()
+        if not secim.isdigit():
+            print("⚠️  Lütfen geçerli bir numara girin!\n")
+            return
+
+        index = int(secim) - 1
+        if 0 <= index < len(favoriler):
+            silinen = favoriler.pop(index)
+            self.favorileri_kaydet(favoriler)
+            print(f"✅ '{silinen}' favorilerden silindi.\n")
+            return
+
+        print("⚠️  Geçersiz seçim yaptınız!\n")
     
     def calistir(self):
         """Uygulamayı çalıştırır."""
@@ -199,6 +289,10 @@ class HavaDurumuApp:
             print("Seçenekler:")
             print("  1. Mevcut hava durumu")
             print("  2. 5 günlük hava tahmini")
+            print("  3. Favori şehre ekle")
+            print("  4. Favori şehirleri listele")
+            print("  5. Favori şehirden hava durumu göster")
+            print("  6. Favori şehir sil")
             print("  q. Çıkış")
 
             secim = input("🔹 Seçim yapın veya direkt şehir adı girin: ").strip()
@@ -215,6 +309,26 @@ class HavaDurumuApp:
 
                 veri = self.tahmin_getir(sehir)
                 self.tahmin_goster(veri)
+                continue
+
+            if secim == '3':
+                sehir = input("⭐ Favorilere eklenecek şehir: ").strip()
+                self.favori_ekle(sehir)
+                continue
+
+            if secim == '4':
+                self.favorileri_listele()
+                continue
+
+            if secim == '5':
+                sehir = self.favori_sec()
+                if sehir:
+                    veri = self.hava_durumu_getir(sehir)
+                    self.bilgileri_goster(veri)
+                continue
+
+            if secim == '6':
+                self.favori_sil()
                 continue
 
             if secim == '1':
