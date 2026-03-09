@@ -27,6 +27,34 @@ class HavaDurumuApp:
             "Saturday": "Cumartesi",
             "Sunday": "Pazar",
         }
+
+    def hava_emoji(self, aciklama):
+        """Hava durumu açıklamasına göre uygun emoji döndürür."""
+        aciklama = aciklama.lower()
+
+        if any(kelime in aciklama for kelime in ["gök gürültülü", "fırtına", "storm", "thunder"]):
+            return "⛈️"
+        if any(kelime in aciklama for kelime in ["kar", "snow"]):
+            return "❄️"
+        if any(kelime in aciklama for kelime in ["yağmur", "rain", "sağanak"]):
+            return "🌧️"
+        if any(kelime in aciklama for kelime in ["sis", "mist", "fog", "pus"]):
+            return "🌫️"
+        if any(kelime in aciklama for kelime in ["kapalı", "bulut", "cloud"]):
+            return "☁️"
+        if any(kelime in aciklama for kelime in ["parçalı", "az bulutlu"]):
+            return "⛅"
+        if any(kelime in aciklama for kelime in ["açık", "güneş", "clear"]):
+            return "☀️"
+        return "🌤️"
+
+    def sicaklik_emoji(self, sicaklik):
+        """Sıcaklığa göre küçük bir durum emojisi döndürür."""
+        if sicaklik <= 0:
+            return "🥶"
+        if sicaklik >= 30:
+            return "🥵"
+        return "🙂"
         
     def hava_durumu_getir(self, sehir):
         """Belirtilen şehir için hava durumu bilgisi getirir."""
@@ -79,6 +107,8 @@ class HavaDurumuApp:
         nem = veri['main']['humidity']
         basinc = veri['main']['pressure']
         aciklama = veri['weather'][0]['description'].capitalize()
+        hava_ikonu = self.hava_emoji(aciklama)
+        sicaklik_ikonu = self.sicaklik_emoji(sicaklik)
         ruzgar = veri['wind']['speed']
         
         # Güneş doğuş/batış zamanları
@@ -89,8 +119,8 @@ class HavaDurumuApp:
         print("\n" + "="*50)
         print(f"🌍 Şehir: {sehir}, {ulke}")
         print("="*50)
-        print(f"🌡️  Sıcaklık: {sicaklik}°C (Hissedilen: {hissedilen}°C)")
-        print(f"☁️  Durum: {aciklama}")
+        print(f"🌡️  Sıcaklık: {sicaklik}°C (Hissedilen: {hissedilen}°C) {sicaklik_ikonu}")
+        print(f"{hava_ikonu}  Durum: {aciklama}")
         print(f"💧 Nem: {nem}%")
         print(f"🌬️  Rüzgar: {ruzgar} m/s")
         print(f"📊 Basınç: {basinc} hPa")
@@ -157,11 +187,12 @@ class HavaDurumuApp:
             gun_adi_en = tarih_obj.strftime("%A")
             gun_adi_tr = self.gunler_tr.get(gun_adi_en, gun_adi_en)
             aciklama = secilen_kayit["weather"][0]["description"].capitalize()
+            hava_ikonu = self.hava_emoji(aciklama)
             nem = secilen_kayit["main"]["humidity"]
 
             print(f"\n🗓️  {gun_adi_tr} - {tarih_obj.strftime('%d.%m.%Y')}")
             print(f"   🌡️  Min: {min(sicakliklar):.1f}°C | Max: {max(sicakliklar):.1f}°C")
-            print(f"   ☁️  Durum: {aciklama}")
+            print(f"   {hava_ikonu}  Durum: {aciklama}")
             print(f"   💧 Nem: {nem}%")
 
         print("="*70 + "\n")
@@ -287,12 +318,12 @@ class HavaDurumuApp:
         
         while True:
             print("Seçenekler:")
-            print("  1. Mevcut hava durumu")
-            print("  2. 5 günlük hava tahmini")
-            print("  3. Favori şehre ekle")
-            print("  4. Favori şehirleri listele")
-            print("  5. Favori şehirden hava durumu göster")
-            print("  6. Favori şehir sil")
+            print("  1. 🌡️  Mevcut hava durumu")
+            print("  2. 📅 5 günlük hava tahmini")
+            print("  3. ⭐ Favori şehre ekle")
+            print("  4. 📋 Favori şehirleri listele")
+            print("  5. 🌍 Favori şehirden hava durumu göster")
+            print("  6. 🗑️  Favori şehir sil")
             print("  q. Çıkış")
 
             secim = input("🔹 Seçim yapın veya direkt şehir adı girin: ").strip()
