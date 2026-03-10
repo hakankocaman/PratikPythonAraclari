@@ -50,7 +50,8 @@
     "7": {
       "title": "Hava Durumu Uyarıları",
       "description": "Aşırı hava koşulları için otomatik uyarı sistemi",
-      "status": "pending"
+      "status": "completed",
+      "completion_date": "2026-03-10"
     }
   },
   "automation": {

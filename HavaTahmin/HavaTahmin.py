@@ -190,6 +190,114 @@ class HavaDurumuApp:
         print(f"✅ Karşılaştırma grafiği kaydedildi: {dosya_adi}\n")
         plt.show()
 
+    def hava_uyarisi_kontrol(self, veri):
+        """Hava durumu verisini analiz ederek aşırı koşullar için uyarı üretir."""
+        if not veri:
+            return []
+
+        uyarilar = []
+        sicaklik = veri["main"]["temp"]
+        hissedilen = veri["main"]["feels_like"]
+        nem = veri["main"]["humidity"]
+        ruzgar = veri["wind"]["speed"]
+        aciklama = veri["weather"][0]["description"].lower()
+        gorunurluk = veri.get("visibility", 10000)
+
+        if sicaklik >= 38:
+            uyarilar.append(("🔴 KRİTİK", f"Çok yüksek sıcaklık: {sicaklik:.1f}°C — Dışarı çıkmayın!"))
+        elif sicaklik >= 33:
+            uyarilar.append(("🟠 UYARI", f"Yüksek sıcaklık: {sicaklik:.1f}°C — Bol su için."))
+
+        if sicaklik <= -10:
+            uyarilar.append(("🔴 KRİTİK", f"Aşırı soğuk: {sicaklik:.1f}°C — Don tehlikesi!"))
+        elif sicaklik <= 0:
+            uyarilar.append(("🟠 UYARI", f"Donma noktası: {sicaklik:.1f}°C — Buzlanma riski."))
+
+        if hissedilen <= -15:
+            uyarilar.append(("🔴 KRİTİK", f"Hissedilen sıcaklık: {hissedilen:.1f}°C — Hipotermi riski!"))
+
+        if ruzgar >= 20:
+            uyarilar.append(("🔴 KRİTİK", f"Fırtına şiddeti rüzgar: {ruzgar:.1f} m/s — Dışarı çıkmayın!"))
+        elif ruzgar >= 13:
+            uyarilar.append(("🟠 UYARI", f"Kuvvetli rüzgar: {ruzgar:.1f} m/s — Dikkatli olun."))
+
+        if nem >= 90:
+            uyarilar.append(("🟡 BİLGİ", f"Çok yüksek nem: %{nem} — Bunaltıcı hava."))
+
+        if any(k in aciklama for k in ["fırtına", "storm", "thunder", "gök gürültü"]):
+            uyarilar.append(("🔴 KRİTİK", "Fırtına uyarısı! Açık alanda bulunmayın."))
+
+        if any(k in aciklama for k in ["yoğun kar", "heavy snow", "blizzard"]):
+            uyarilar.append(("🔴 KRİTİK", "Yoğun kar yağışı! Seyahat etmekten kaçının."))
+        elif any(k in aciklama for k in ["kar", "snow"]):
+            uyarilar.append(("🟠 UYARI", "Kar yağışı bekleniyor — Yollar kaygan olabilir."))
+
+        if gorunurluk < 200:
+            uyarilar.append(("🔴 KRİTİK", f"Görüş mesafesi çok düşük: {gorunurluk}m — Araç kullanmayın!"))
+        elif gorunurluk < 1000:
+            uyarilar.append(("🟠 UYARI", f"Düşük görüş mesafesi: {gorunurluk}m — Yavaş sürün."))
+
+        return uyarilar
+
+    def uyarilari_goster(self, sehir):
+        """Şehir için hava durumu uyarılarını getirir ve gösterir."""
+        veri = self.hava_durumu_getir(sehir)
+        if not veri:
+            return
+
+        uyarilar = self.hava_uyarisi_kontrol(veri)
+
+        print(f"\n{'='*55}")
+        print(f"🚨 HAVA DURUMU UYARI RAPORU — {veri['name']}, {veri['sys']['country']}")
+        print(f"{'='*55}")
+
+        if not uyarilar:
+            print("✅ Herhangi bir aşırı hava koşulu tespit edilmedi.")
+            print(f"   Sıcaklık: {veri['main']['temp']:.1f}°C | Rüzgar: {veri['wind']['speed']:.1f} m/s | Nem: %{veri['main']['humidity']}")
+        else:
+            for seviye, mesaj in uyarilar:
+                print(f"\n  {seviye}: {mesaj}")
+
+        print(f"{'='*55}\n")
+
+    def tahmin_uyari_taramasi(self, sehir):
+        """5 günlük tahmin içinde aşırı koşulları tarayarak uyarı verir."""
+        veri = self.tahmin_getir(sehir)
+        if not veri:
+            return
+
+        print(f"\n{'='*60}")
+        print(f"🔍 5 GÜNLÜK UYARI TARAMASI — {veri['city']['name']}, {veri['city']['country']}")
+        print(f"{'='*60}")
+
+        uyari_bulundu = False
+        gunluk_veri = {}
+        for kayit in veri["list"]:
+            tarih = datetime.fromtimestamp(kayit["dt"]).strftime("%Y-%m-%d")
+            gunluk_veri.setdefault(tarih, []).append(kayit)
+
+        for tarih, kayitlar in list(gunluk_veri.items())[:5]:
+            gun_uyarilari = []
+            for kayit in kayitlar:
+                uyarilar = self.hava_uyarisi_kontrol(kayit)
+                gun_uyarilari.extend(uyarilar)
+
+            if gun_uyarilari:
+                uyari_bulundu = True
+                tarih_obj = datetime.strptime(tarih, "%Y-%m-%d")
+                gun_adi = self.gunler_tr.get(tarih_obj.strftime("%A"), tarih_obj.strftime("%A"))
+                print(f"\n📅 {gun_adi} {tarih_obj.strftime('%d.%m.%Y')}:")
+                tekrar = set()
+                for seviye, mesaj in gun_uyarilari:
+                    if mesaj not in tekrar:
+                        print(f"   {seviye}: {mesaj}")
+                        tekrar.add(mesaj)
+
+        if not uyari_bulundu:
+            print("\n✅ Önümüzdeki 5 gün için aşırı hava koşulu öngörülmüyor.")
+
+        print(f"\n{'='*60}\n")
+
     def sehir_karsilastir(self, sehirler):
         """Birden fazla şehrin mevcut hava durumunu karşılaştırır."""
         if len(sehirler) < 2:
@@ -518,6 +626,8 @@ class HavaDurumuApp:
             print("  7. 📊 Birden fazla şehri karşılaştır")
             print("  8. 📈 Sıcaklık grafiği göster")
             print("  9. 📉 Şehirleri grafikle karşılaştır")
+            print(" 10. 🚨 Anlık hava durumu uyarıları")
+            print(" 11. 🔍 5 günlük uyarı taraması")
             print("  q. Çıkış")
             print("  İpucu: Doğrudan şehir adı da yazabilirsiniz. Örnek: Sakarya")
 
@@ -557,6 +667,18 @@ class HavaDurumuApp:
 
             if secim == '6':
                 self.favori_sil()
+                continue
+
+            if secim == '10':
+                sehir = self.sehir_girdisini_duzenle(input("🚨 Uyarı kontrolü için şehir adı: "))
+                if sehir:
+                    self.uyarilari_goster(sehir)
+                continue
+
+            if secim == '11':
+                sehir = self.sehir_girdisini_duzenle(input("🔍 5 günlük uyarı taraması için şehir adı: "))
+                if sehir:
+                    self.tahmin_uyari_taramasi(sehir)
                 continue
 
             if secim == '8':
