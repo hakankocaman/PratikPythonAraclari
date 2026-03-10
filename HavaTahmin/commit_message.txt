@@ -1,1 +1,1 @@
-📊 Gün 5: Şehir karşılaştırma özelliği eklendi
+📈 Gün 6: Grafik desteği için matplotlib eklendi (requirements.txt güncellendi)
