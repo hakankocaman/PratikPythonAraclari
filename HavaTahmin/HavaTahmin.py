@@ -8,6 +8,9 @@ OpenWeatherMap API kullanarak gerçek zamanlı hava durumu bilgisi sağlar.
 import json
 import requests
 import sys
+import sqlite3
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -25,6 +28,13 @@ class HavaDurumuApp:
         self.base_url = "http://api.openweathermap.org/data/2.5/weather"
         self.forecast_url = "http://api.openweathermap.org/data/2.5/forecast"
         self.favoriler_dosyasi = Path(__file__).with_name("favoriler.json")
+        # SQLite veritabanı dosyası
+        self.db_dosyasi = Path(__file__).with_name("hava_gecmisi.db")
+        # Telegram yapılandırma dosyası
+        self.telegram_config_dosyasi = Path(__file__).with_name("telegram_config.json")
+        # Otomatik takip durumu
+        self.takip_aktif = False
+        self.takip_thread = None
         self.gunler_tr = {
             "Monday": "Pazartesi",
             "Tuesday": "Salı",
@@ -34,6 +44,238 @@ class HavaDurumuApp:
             "Saturday": "Cumartesi",
             "Sunday": "Pazar",
         }
+        # Veritabanını başlat
+        self.db_baslat()
+
+    # =========================================================
+    # Özellik 1: SQLite Hava Durumu Geçmişi
+    # =========================================================
+
+    def db_baslat(self):
+        """SQLite veritabanını oluşturur ve tabloyu hazırlar."""
+        try:
+            with sqlite3.connect(self.db_dosyasi) as conn:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS hava_gecmisi (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        sehir TEXT NOT NULL,
+                        tarih TEXT NOT NULL,
+                        sicaklik REAL,
+                        hissedilen REAL,
+                        nem INTEGER,
+                        ruzgar REAL,
+                        aciklama TEXT
+                    )
+                """)
+                conn.commit()
+        except Exception as e:
+            print(f"⚠️  Veritabanı başlatılamadı: {e}")
+
+    def gecmise_kaydet(self, sehir, veri):
+        """Hava durumu sorgusunu SQLite veritabanına kaydeder."""
+        if not veri:
+            return
+        try:
+            tarih = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            sicaklik = veri["main"]["temp"]
+            hissedilen = veri["main"]["feels_like"]
+            nem = veri["main"]["humidity"]
+            ruzgar = veri["wind"]["speed"]
+            aciklama = veri["weather"][0]["description"]
+            sehir_adi = veri.get("name", sehir)
+
+            with sqlite3.connect(self.db_dosyasi) as conn:
+                conn.execute("""
+                    INSERT INTO hava_gecmisi (sehir, tarih, sicaklik, hissedilen, nem, ruzgar, aciklama)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (sehir_adi, tarih, sicaklik, hissedilen, nem, ruzgar, aciklama))
+                conn.commit()
+        except Exception as e:
+            print(f"⚠️  Geçmişe kaydedilemedi: {e}")
+
+    def gecmisi_goster(self, sehir):
+        """Belirtilen şehir için son 10 sorguyu gösterir."""
+        sehir = self.sehir_girdisini_duzenle(sehir)
+        try:
+            with sqlite3.connect(self.db_dosyasi) as conn:
+                cursor = conn.execute("""
+                    SELECT tarih, sicaklik, hissedilen, nem, ruzgar, aciklama
+                    FROM hava_gecmisi
+                    WHERE LOWER(sehir) = LOWER(?)
+                    ORDER BY id DESC
+                    LIMIT 10
+                """, (sehir,))
+                satirlar = cursor.fetchall()
+
+            print(f"\n{'='*65}")
+            print(f"📜 HAVA DURUMU GEÇMİŞİ — {sehir.upper()}")
+            print(f"{'='*65}")
+
+            if not satirlar:
+                print(f"  ℹ️  '{sehir}' için kayıtlı geçmiş bulunamadı.")
+            else:
+                for satir in satirlar:
+                    tarih, sicaklik, hissedilen, nem, ruzgar, aciklama = satir
+                    emoji = self.hava_emoji(aciklama)
+                    print(f"  📅 {tarih}")
+                    print(f"     {emoji} {aciklama.capitalize()} | 🌡️ {sicaklik}°C (Hissedilen: {hissedilen}°C) | 💧 %{nem} | 🌬️ {ruzgar} m/s")
+                    print()
+
+            print(f"{'='*65}\n")
+
+        except Exception as e:
+            print(f"❌ Geçmiş okunamadı: {e}")
+
+    # =========================================================
+    # Özellik 2: Telegram Bildirimi
+    # =========================================================
+
+    def telegram_ayarlarini_kaydet(self, bot_token, chat_id):
+        """Telegram yapılandırmasını JSON dosyasına kaydeder."""
+        config = {"bot_token": bot_token, "chat_id": chat_id}
+        with open(self.telegram_config_dosyasi, "w", encoding="utf-8") as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        print("✅ Telegram ayarları kaydedildi.\n")
+
+    def telegram_ayarlarini_yukle(self):
+        """Telegram yapılandırmasını JSON dosyasından yükler."""
+        if not self.telegram_config_dosyasi.exists():
+            return None, None
+        try:
+            with open(self.telegram_config_dosyasi, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            return config.get("bot_token"), config.get("chat_id")
+        except Exception:
+            return None, None
+
+    def telegram_bildir(self, sehir, bot_token, chat_id):
+        """Hava durumu bilgisini Telegram botuna gönderir."""
+        veri = self.hava_durumu_getir(sehir)
+        if not veri:
+            print("❌ Hava durumu alınamadı, Telegram bildirimi gönderilemedi.\n")
+            return False
+
+        sehir_adi = veri["name"]
+        ulke = veri["sys"]["country"]
+        sicaklik = veri["main"]["temp"]
+        hissedilen = veri["main"]["feels_like"]
+        nem = veri["main"]["humidity"]
+        ruzgar = veri["wind"]["speed"]
+        aciklama = veri["weather"][0]["description"].capitalize()
+        emoji = self.hava_emoji(aciklama)
+
+        mesaj = (
+            f"{emoji} *Hava Durumu — {sehir_adi}, {ulke}*\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🌡️ Sıcaklık: *{sicaklik}°C* (Hissedilen: {hissedilen}°C)\n"
+            f"☁️ Durum: {aciklama}\n"
+            f"💧 Nem: %{nem}\n"
+            f"🌬️ Rüzgar: {ruzgar} m/s\n"
+            f"⏰ Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+        )
+
+        # Uyarılar varsa ekle
+        uyarilar = self.hava_uyarisi_kontrol(veri)
+        if uyarilar:
+            mesaj += "\n\n⚠️ *UYARILAR:*\n"
+            for seviye, uyari_metni in uyarilar:
+                mesaj += f"{seviye}: {uyari_metni}\n"
+
+        try:
+            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            yanit = requests.post(url, json={
+                "chat_id": chat_id,
+                "text": mesaj,
+                "parse_mode": "Markdown"
+            }, timeout=10)
+
+            if yanit.status_code == 200:
+                print(f"✅ Telegram bildirimi gönderildi: {sehir_adi}\n")
+                return True
+            else:
+                print(f"❌ Telegram hatası: {yanit.status_code} — {yanit.text}\n")
+                return False
+        except Exception as e:
+            print(f"❌ Telegram bağlantı hatası: {e}\n")
+            return False
+
+    # =========================================================
+    # Özellik 3: Otomatik Takip
+    # =========================================================
+
+    def otomatik_takip_baslat(self, sehir, aralik_dakika, bot_token=None, chat_id=None):
+        """Belirli aralıklarla hava durumu takibi yapan bir thread başlatır."""
+        if self.takip_aktif:
+            print("⚠️  Otomatik takip zaten çalışıyor!\n")
+            return
+
+        self.takip_aktif = True
+
+        def takip_dongusu():
+            print(f"✅ Otomatik takip başlatıldı: {sehir} — Her {aralik_dakika} dakikada bir kontrol edilecek.\n")
+            while self.takip_aktif:
+                print(f"\n⏰ [{datetime.now().strftime('%H:%M:%S')}] Otomatik hava kontrolü: {sehir}")
+                veri = self.hava_durumu_getir(sehir)
+                if veri:
+                    uyarilar = self.hava_uyarisi_kontrol(veri)
+                    if uyarilar:
+                        print(f"🚨 {sehir} için uyarılar:")
+                        for seviye, metin in uyarilar:
+                            print(f"   {seviye}: {metin}")
+                        # Telegram bildirimi gönder
+                        if bot_token and chat_id:
+                            self.telegram_bildir(sehir, bot_token, chat_id)
+                    else:
+                        sicaklik = veri["main"]["temp"]
+                        aciklama = veri["weather"][0]["description"]
+                        print(f"   ✅ Normal: {sicaklik}°C, {aciklama}")
+
+                # Her dakika bir uyku döngüsü — durdurma isteğini kontrol et
+                for _ in range(aralik_dakika * 60):
+                    if not self.takip_aktif:
+                        break
+                    time.sleep(1)
+
+            print("\n⏹️  Otomatik takip durduruldu.\n")
+
+        self.takip_thread = threading.Thread(target=takip_dongusu, daemon=True)
+        self.takip_thread.start()
+
+    def otomatik_takip_durdur(self):
+        """Otomatik takibi durdurur."""
+        if not self.takip_aktif:
+            print("⚠️  Otomatik takip zaten çalışmıyor.\n")
+            return
+        self.takip_aktif = False
+        print("⏹️  Otomatik takip durduruluyor...\n")
+
+    # =========================================================
+    # Özellik 4: Web Sunucusu Başlatma (web_server.py üzerinden)
+    # =========================================================
+
+    def web_sunucusu_baslat(self, port=5000):
+        """Flask web sunucusunu başlatır."""
+        web_server_path = Path(__file__).with_name("web_server.py")
+        if not web_server_path.exists():
+            print(f"❌ web_server.py bulunamadı: {web_server_path}\n")
+            return
+
+        import subprocess
+        print(f"🌐 Web sunucusu başlatılıyor: http://localhost:{port}\n")
+        print("   Durdurmak için Ctrl+C tuşlarına basın.\n")
+        try:
+            subprocess.run(
+                [sys.executable, str(web_server_path), "--port", str(port)],
+                check=True
+            )
+        except KeyboardInterrupt:
+            print("\n🌐 Web sunucusu durduruldu.\n")
+        except Exception as e:
+            print(f"❌ Web sunucusu başlatılamadı: {e}\n")
+
+    # =========================================================
+    # Mevcut metodlar
+    # =========================================================
 
     def hava_emoji(self, aciklama):
         """Hava durumu açıklamasına göre uygun emoji döndürür."""
@@ -111,7 +353,6 @@ class HavaDurumuApp:
             fontsize=14, fontweight="bold"
         )
 
-        # Sıcaklık grafiği
         ax1.fill_between(tarihler, min_sicakliklar, max_sicakliklar, alpha=0.3, color="orange", label="Min-Max aralığı")
         ax1.plot(tarihler, ortalama_sicakliklar, "o-", color="red", linewidth=2, markersize=8, label="Ortalama sıcaklık")
         ax1.plot(tarihler, min_sicakliklar, "v--", color="blue", linewidth=1.5, markersize=6, label="Min sıcaklık")
@@ -126,7 +367,6 @@ class HavaDurumuApp:
         ax1.grid(True, alpha=0.3)
         ax1.set_facecolor("#f9f9f9")
 
-        # Nem grafiği
         ax2.bar(tarihler, nem_degerleri, color="steelblue", alpha=0.7, width=0.6, label="Ortalama nem")
         for i, (tarih, nem) in enumerate(zip(tarihler, nem_degerleri)):
             ax2.text(tarih, nem + 1, f"{nem:.0f}%", ha="center", fontsize=9, color="steelblue")
@@ -341,25 +581,26 @@ class HavaDurumuApp:
             )
 
         print("=" * 96 + "\n")
-        
+
     def hava_durumu_getir(self, sehir):
         """Belirtilen şehir için hava durumu bilgisi getirir."""
         sehir = self.sehir_girdisini_duzenle(sehir)
 
         try:
-            # API parametreleri
             params = {
                 'q': sehir,
                 'appid': self.api_key,
-                'units': 'metric',  # Celsius için
-                'lang': 'tr'  # Türkçe açıklamalar
+                'units': 'metric',
+                'lang': 'tr'
             }
-            
-            # API isteği
+
             response = requests.get(self.base_url, params=params, timeout=10)
-            
+
             if response.status_code == 200:
-                return response.json()
+                veri = response.json()
+                # Başarılı sorguyu geçmişe kaydet
+                self.gecmise_kaydet(sehir, veri)
+                return veri
             elif response.status_code == 401:
                 print("❌ HATA: Geçersiz API anahtarı!")
                 print("🔑 Lütfen OpenWeatherMap'ten ücretsiz API anahtarı alın:")
@@ -371,7 +612,7 @@ class HavaDurumuApp:
             else:
                 print(f"❌ HATA: API hatası (Kod: {response.status_code})")
                 return None
-                
+
         except requests.exceptions.ConnectionError:
             print("❌ HATA: İnternet bağlantısı yok!")
             return None
@@ -381,13 +622,12 @@ class HavaDurumuApp:
         except Exception as e:
             print(f"❌ Beklenmeyen hata: {e}")
             return None
-    
+
     def bilgileri_goster(self, veri):
         """Hava durumu bilgilerini formatlanmış şekilde gösterir."""
         if not veri:
             return
-        
-        # Veri çıkarma
+
         sehir = veri['name']
         ulke = veri['sys']['country']
         sicaklik = veri['main']['temp']
@@ -398,12 +638,10 @@ class HavaDurumuApp:
         hava_ikonu = self.hava_emoji(aciklama)
         sicaklik_ikonu = self.sicaklik_emoji(sicaklik)
         ruzgar = veri['wind']['speed']
-        
-        # Güneş doğuş/batış zamanları
+
         gun_dogus = datetime.fromtimestamp(veri['sys']['sunrise']).strftime('%H:%M')
         gun_batis = datetime.fromtimestamp(veri['sys']['sunset']).strftime('%H:%M')
-        
-        # Ekrana yazdırma
+
         print("\n" + "="*50)
         print(f"🌍 Şehir: {sehir}, {ulke}")
         print("="*50)
@@ -583,13 +821,13 @@ class HavaDurumuApp:
             return
 
         print("⚠️  Geçersiz seçim yaptınız!\n")
+
     def calistir(self):
         """Uygulamayı çalıştırır."""
         print("\n" + "🌤️  " * 10)
         print("     HAVA DURUMU TAHMİN UYGULAMASI")
         print("🌤️  " * 10 + "\n")
-        
-        # API anahtarı kontrolü
+
         if self.api_key == "BURAYA_API_ANAHTARINIZI_GIRIN":
             print("⚠️  API anahtarı ayarlanmamış!")
             print("🔑 OpenWeatherMap'ten ücretsiz API anahtarı alın:")
@@ -597,8 +835,7 @@ class HavaDurumuApp:
             print("   2. Ücretsiz hesap oluşturun")
             print("   3. API anahtarınızı kopyalayın")
             print("   4. HavaTahmin.py dosyasındaki 'BURAYA_API_ANAHTARINIZI_GIRIN' kısmına yapıştırın\n")
-            
-            # Demo modu
+
             demo = input("Demo modu için 'demo' yazın veya çıkmak için Enter'a basın: ").strip().lower()
             if demo == 'demo':
                 print("\n📝 Demo Modu: İstanbul için örnek çıktı gösteriliyor...\n")
@@ -614,7 +851,7 @@ class HavaDurumuApp:
                 print("🌇 Gün Batımı: 18:30")
                 print("="*50 + "\n")
             return
-        
+
         while True:
             print("Seçenekler:")
             print("  1. 🌡️  Mevcut hava durumu")
@@ -628,6 +865,11 @@ class HavaDurumuApp:
             print("  9. 📉 Şehirleri grafikle karşılaştır")
             print(" 10. 🚨 Anlık hava durumu uyarıları")
             print(" 11. 🔍 5 günlük uyarı taraması")
+            print(" 12. 📜 Hava durumu geçmişi")
+            print(" 13. 📱 Telegram'a hava durumu gönder")
+            print(" 14. ⏰ Otomatik takip başlat")
+            print(" 15. ⏹️  Otomatik takibi durdur")
+            print(" 16. 🌐 Web sunucusunu başlat (port 5000)")
             print("  q. Çıkış")
             print("  İpucu: Doğrudan şehir adı da yazabilirsiniz. Örnek: Sakarya")
 
@@ -644,7 +886,6 @@ class HavaDurumuApp:
                 if not sehir:
                     print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
                     continue
-
                 veri = self.tahmin_getir(sehir)
                 self.tahmin_goster(veri)
                 continue
@@ -701,6 +942,51 @@ class HavaDurumuApp:
                 self.sehir_karsilastir(sehirler)
                 continue
 
+            # Özellik 1: Hava durumu geçmişi
+            if secim == '12':
+                sehir = self.sehir_girdisini_duzenle(input("📜 Geçmişi görüntülenecek şehir: "))
+                if sehir:
+                    self.gecmisi_goster(sehir)
+                continue
+
+            # Özellik 2: Telegram bildirimi
+            if secim == '13':
+                sehir = self.sehir_girdisini_duzenle(input("📱 Hava durumu gönderilecek şehir: "))
+                if not sehir:
+                    continue
+                bot_token, chat_id = self.telegram_ayarlarini_yukle()
+                if bot_token and chat_id:
+                    print(f"ℹ️  Kayıtlı Telegram ayarları kullanılıyor...\n")
+                else:
+                    bot_token = input("🤖 Telegram Bot Token: ").strip()
+                    chat_id = input("💬 Telegram Chat ID: ").strip()
+                    kaydet = input("💾 Bu ayarları kaydetmek ister misiniz? (e/h): ").strip().lower()
+                    if kaydet == 'e':
+                        self.telegram_ayarlarini_kaydet(bot_token, chat_id)
+                self.telegram_bildir(sehir, bot_token, chat_id)
+                continue
+
+            # Özellik 3: Otomatik takip başlat
+            if secim == '14':
+                sehir = self.sehir_girdisini_duzenle(input("⏰ Takip edilecek şehir: "))
+                if not sehir:
+                    continue
+                aralik_str = input("⏱️  Kontrol aralığı (dakika, varsayılan: 30): ").strip()
+                aralik = int(aralik_str) if aralik_str.isdigit() else 30
+                bot_token, chat_id = self.telegram_ayarlarini_yukle()
+                self.otomatik_takip_baslat(sehir, aralik, bot_token, chat_id)
+                continue
+
+            # Özellik 3: Otomatik takibi durdur
+            if secim == '15':
+                self.otomatik_takip_durdur()
+                continue
+
+            # Özellik 4: Web sunucusu
+            if secim == '16':
+                self.web_sunucusu_baslat()
+                continue
+
             if secim == '1':
                 sehir = self.sehir_girdisini_duzenle(input("🏙️  Şehir adı girin: "))
             else:
@@ -709,8 +995,7 @@ class HavaDurumuApp:
             if not sehir:
                 print("⚠️  Lütfen geçerli bir şehir adı girin!\n")
                 continue
-            
-            # Hava durumu bilgisi getir ve göster
+
             veri = self.hava_durumu_getir(sehir)
             self.bilgileri_goster(veri)
 
