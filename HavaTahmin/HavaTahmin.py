@@ -11,6 +11,13 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+try:
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    MATPLOTLIB_MEVCUT = True
+except ImportError:
+    MATPLOTLIB_MEVCUT = False
+
 class HavaDurumuApp:
     def __init__(self):
         # OpenWeatherMap API anahtarı (Ücretsiz: https://openweathermap.org/api)
@@ -67,6 +74,121 @@ class HavaDurumuApp:
             (self.sehir_girdisini_duzenle(parca) for parca in girdi.split(","))
             if sehir
         ]
+
+    def grafik_goster(self, sehir):
+        """Belirtilen şehir için 5 günlük sıcaklık grafiği çizer."""
+        if not MATPLOTLIB_MEVCUT:
+            print("❌ Grafik özelliği için matplotlib kurulu olmalı: pip install matplotlib\n")
+            return
+
+        veri = self.tahmin_getir(sehir)
+        if not veri:
+            return
+
+        tarihler = []
+        min_sicakliklar = []
+        max_sicakliklar = []
+        ortalama_sicakliklar = []
+        nem_degerleri = []
+
+        gunluk_veri = {}
+        for kayit in veri["list"]:
+            tarih = datetime.fromtimestamp(kayit["dt"]).strftime("%Y-%m-%d")
+            gunluk_veri.setdefault(tarih, []).append(kayit)
+
+        for tarih, kayitlar in list(gunluk_veri.items())[:5]:
+            sicakliklar = [k["main"]["temp"] for k in kayitlar]
+            nem = [k["main"]["humidity"] for k in kayitlar]
+            tarihler.append(datetime.strptime(tarih, "%Y-%m-%d"))
+            min_sicakliklar.append(min(sicakliklar))
+            max_sicakliklar.append(max(sicakliklar))
+            ortalama_sicakliklar.append(sum(sicakliklar) / len(sicakliklar))
+            nem_degerleri.append(sum(nem) / len(nem))
+
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+        fig.suptitle(
+            f"5 Günlük Hava Durumu Grafiği — {veri['city']['name']}, {veri['city']['country']}",
+            fontsize=14, fontweight="bold"
+        )
+
+        # Sıcaklık grafiği
+        ax1.fill_between(tarihler, min_sicakliklar, max_sicakliklar, alpha=0.3, color="orange", label="Min-Max aralığı")
+        ax1.plot(tarihler, ortalama_sicakliklar, "o-", color="red", linewidth=2, markersize=8, label="Ortalama sıcaklık")
+        ax1.plot(tarihler, min_sicakliklar, "v--", color="blue", linewidth=1.5, markersize=6, label="Min sıcaklık")
+        ax1.plot(tarihler, max_sicakliklar, "^--", color="darkred", linewidth=1.5, markersize=6, label="Max sıcaklık")
+
+        for i, (tarih, ort) in enumerate(zip(tarihler, ortalama_sicakliklar)):
+            ax1.annotate(f"{ort:.1f}°C", (tarih, ort), textcoords="offset points",
+                         xytext=(0, 10), ha="center", fontsize=9, color="red")
+
+        ax1.set_ylabel("Sıcaklık (°C)", fontsize=11)
+        ax1.legend(loc="upper right", fontsize=9)
+        ax1.grid(True, alpha=0.3)
+        ax1.set_facecolor("#f9f9f9")
+
+        # Nem grafiği
+        ax2.bar(tarihler, nem_degerleri, color="steelblue", alpha=0.7, width=0.6, label="Ortalama nem")
+        for i, (tarih, nem) in enumerate(zip(tarihler, nem_degerleri)):
+            ax2.text(tarih, nem + 1, f"{nem:.0f}%", ha="center", fontsize=9, color="steelblue")
+
+        ax2.set_ylabel("Nem (%)", fontsize=11)
+        ax2.set_ylim(0, 110)
+        ax2.legend(loc="upper right", fontsize=9)
+        ax2.grid(True, alpha=0.3, axis="y")
+        ax2.set_facecolor("#f9f9f9")
+
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%d %b\n%A"))
+        plt.xticks(tarihler)
+        plt.tight_layout()
+        plt.savefig(f"{sehir.replace(' ', '_')}_hava_grafik.png", dpi=150, bbox_inches="tight")
+        print(f"✅ Grafik kaydedildi: {sehir.replace(' ', '_')}_hava_grafik.png\n")
+        plt.show()
+
+    def sicaklik_karsilastirma_grafigi(self, sehirler):
+        """Birden fazla şehrin sıcaklık karşılaştırma grafiğini çizer."""
+        if not MATPLOTLIB_MEVCUT:
+            print("❌ Grafik özelliği için matplotlib kurulu olmalı.\n")
+            return
+
+        if len(sehirler) < 2:
+            print("⚠️  Karşılaştırma için en az iki şehir gerekli!\n")
+            return
+
+        fig, ax = plt.subplots(figsize=(11, 6))
+        renkler = ["red", "blue", "green", "purple", "orange"]
+
+        for i, sehir in enumerate(sehirler[:5]):
+            veri = self.tahmin_getir(sehir)
+            if not veri:
+                continue
+
+            gunluk_veri = {}
+            for kayit in veri["list"]:
+                tarih = datetime.fromtimestamp(kayit["dt"]).strftime("%Y-%m-%d")
+                gunluk_veri.setdefault(tarih, []).append(kayit)
+
+            tarihler = []
+            ortalamalar = []
+            for tarih, kayitlar in list(gunluk_veri.items())[:5]:
+                sicakliklar = [k["main"]["temp"] for k in kayitlar]
+                tarihler.append(datetime.strptime(tarih, "%Y-%m-%d"))
+                ortalamalar.append(sum(sicakliklar) / len(sicakliklar))
+
+            renk = renkler[i % len(renkler)]
+            ax.plot(tarihler, ortalamalar, "o-", color=renk, linewidth=2,
+                    markersize=8, label=f"{veri['city']['name']}")
+
+        ax.set_title("Şehir Karşılaştırma — 5 Günlük Ortalama Sıcaklık", fontsize=14, fontweight="bold")
+        ax.set_ylabel("Sıcaklık (°C)", fontsize=11)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
+        ax.legend(fontsize=10)
+        ax.grid(True, alpha=0.3)
+        ax.set_facecolor("#f9f9f9")
+        plt.tight_layout()
+        dosya_adi = "karsilastirma_grafik.png"
+        plt.savefig(dosya_adi, dpi=150, bbox_inches="tight")
+        print(f"✅ Karşılaştırma grafiği kaydedildi: {dosya_adi}\n")
+        plt.show()
 
     def sehir_karsilastir(self, sehirler):
         """Birden fazla şehrin mevcut hava durumunu karşılaştırır."""
@@ -394,6 +516,8 @@ class HavaDurumuApp:
             print("  5. 🌍 Favori şehirden hava durumu göster")
             print("  6. 🗑️  Favori şehir sil")
             print("  7. 📊 Birden fazla şehri karşılaştır")
+            print("  8. 📈 Sıcaklık grafiği göster")
+            print("  9. 📉 Şehirleri grafikle karşılaştır")
             print("  q. Çıkış")
             print("  İpucu: Doğrudan şehir adı da yazabilirsiniz. Örnek: Sakarya")
 
@@ -433,6 +557,18 @@ class HavaDurumuApp:
 
             if secim == '6':
                 self.favori_sil()
+                continue
+
+            if secim == '8':
+                sehir = self.sehir_girdisini_duzenle(input("📈 Grafik için şehir adı: "))
+                if sehir:
+                    self.grafik_goster(sehir)
+                continue
+
+            if secim == '9':
+                girdi = input("📉 Karşılaştırılacak şehirleri virgülle girin (örn: Sakarya, Ankara, İzmir): ")
+                sehirler = self.sehir_listesini_ayikla(girdi)
+                self.sicaklik_karsilastirma_grafigi(sehirler)
                 continue
 
             if secim == '7':

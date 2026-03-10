@@ -44,7 +44,8 @@
     "6": {
       "title": "Grafik Desteği",
       "description": "Matplotlib ile sıcaklık grafikleri ve görselleştirme",
-      "status": "pending"
+      "status": "completed",
+      "completion_date": "2026-03-10"
     },
     "7": {
       "title": "Hava Durumu Uyarıları",
