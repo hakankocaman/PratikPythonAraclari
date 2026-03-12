@@ -1,1 +1,1 @@
-📈 Gün 6: Grafik desteği için matplotlib eklendi (requirements.txt güncellendi)
+⚠️ Gün 7: Hava durumu uyarı sistemi eklendi

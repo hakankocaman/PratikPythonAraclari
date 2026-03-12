@@ -822,6 +822,29 @@ class HavaDurumuApp:
 
         print("⚠️  Geçersiz seçim yaptınız!\n")
 
+
+    def uyari_kontrol(self, veri):
+        """Hava durumu uyarılarını kontrol eder."""
+        if not veri:
+            return
+        
+        uyarilar = []
+        sicaklik = veri['main']['temp']
+        ruzgar = veri['wind']['speed']
+        
+        if sicaklik > 35:
+            uyarilar.append("🔥 UYARI: Aşırı sıcak! Güneşten korunun.")
+        elif sicaklik < 0:
+            uyarilar.append("❄️ UYARI: Donma noktasının altında! Dikkatli olun.")
+        
+        if ruzgar > 15:
+            uyarilar.append("💨 UYARI: Kuvvetli rüzgar! Dışarıda dikkatli olun.")
+        
+        if uyarilar:
+            print("\n⚠️  HAVA DURUMU UYARILARI:")
+            for uyari in uyarilar:
+                print(f"  {uyari}")
+            print()
     def calistir(self):
         """Uygulamayı çalıştırır."""
         print("\n" + "🌤️  " * 10)
